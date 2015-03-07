@@ -25,21 +25,16 @@ int main(void)
 	key_t upKey,downKey;
 	upKey = UP;
 	downKey = DOWN;
-	int flag
+	int flag;
 
-
-	if ((midUp = msgget(upKey, 0644)) == -1) { 
-		perror("msgget1");
-		exit(1);
-	}
-
-	if ((midDown = msgget(downKey, 0644 | IPC_CREAT)) == -1) {
-		perror("msgget2");
-		exit(1);
-	}
+	
 	printf("To recieve message press 1 or press 0\n");
 	scanf("%d",&flag);
-	if(flag){		
+	if(flag){
+		if ((midUp = msgget(upKey, 0644)) == -1) { 
+			perror("msgget1");
+			exit(1);
+		}		
 		//Reading Up buf 
 		printf("spock: ready to receive messages\n");
 
@@ -55,7 +50,12 @@ int main(void)
 
 		
 	else{
+		if ((midDown = msgget(downKey, 0644 | IPC_CREAT)) == -1) {
+			perror("msgget2");
+			exit(1);
+		}
 		//Writing down buf
+		printf("Enter lines of text, ^D to quit:\n");
 		downBuf.mtype = 1; /* we don't really care in this case */
 
 		while(fgets(downBuf.mtext, sizeof downBuf.mtext, stdin) != NULL) {

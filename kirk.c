@@ -28,15 +28,9 @@ int main(void)
 	downKey = DOWN;
 	int flag;
 
-	if ((midUp = msgget(upKey, 0644 | IPC_CREAT)) == -1) {
-		perror("msgget1");
-		exit(1);
-	}
 	
-	if ((midDown = msgget(downKey, 0644)) == -1) { 
-		perror("msgget2");
-		exit(1);
-	}
+	
+	
 
 	printf("To send message press 1 or press 0\n");
 	scanf("%d",&flag);
@@ -44,6 +38,11 @@ int main(void)
 	//writing Up buf
 
 	if(flag){
+		if ((midUp = msgget(upKey, 0644 | IPC_CREAT)) == -1) {
+			perror("msgget1");
+			exit(1);
+		}
+
 		printf("Enter lines of text, ^D to quit:\n");
 
 		upBuf.mtype = 1; 
@@ -57,11 +56,22 @@ int main(void)
 			if (msgsnd(midUp, &upBuf, len+1, 0) == -1) /* +1 for '\0' */
 				perror("msgsnd");
 		}
+		if (msgctl(midUp, IPC_RMID, NULL) == -1) {
+			perror("msgctl");
+			exit(1);
+		}
+
 	}
 
 	// Reading down Buf
 
 	else{
+		if ((midDown = msgget(downKey, 0644)) == -1) { 
+			perror("msgget2");
+			exit(1);
+		}
+
+
 		printf("captain: ready to receive messages\n");
 		for(;;) {
 			if (msgrcv(midDown, &downBuf, sizeof(downBuf.mtext), 0, 0) == -1) {
@@ -73,11 +83,7 @@ int main(void)
 	}
 
 
-	if (msgctl(midUp, IPC_RMID, NULL) == -1) {
-		perror("msgctl");
-		exit(1);
-	}
-
+	
 	return 0;
 }
 
