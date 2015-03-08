@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <string.h>
 #define UP 1234
 #define DOWN 4321
 
@@ -16,6 +17,21 @@ struct my_msgbuf {
 	long mtype;
 	char mtext[200];
 };
+
+void removeSubstring(char *s,const char *toremove){
+  while( s=strstr(s,toremove) )
+    memmove(s,s+strlen(toremove),1+strlen(s+strlen(toremove)));
+}
+int parseList(char l[20][200], char *list) { 
+	int cnt = 0; 
+	char * token; 
+	token = strtok(list, " "); 
+	while((token = strtok(NULL, " ")) != NULL) { 
+		strcpy(l[cnt], token);
+		cnt++;
+	} 
+	return cnt;
+}
 
 int main(void)
 {
@@ -28,6 +44,12 @@ int main(void)
 	int flag;
 	char ChatID[20] ;
 	char a[20] = "NEW ";
+	const char s[2] = "-";
+	char strings[20][200];
+	char input[200];
+	char *token;
+	int i = 0,index  = 0;
+
 
 
 	flag = 0;
@@ -49,13 +71,13 @@ int main(void)
 		}
 	}
 
-	//change it to else	
 	else{
 		if ((midDown = msgget(downKey, 0644 | IPC_CREAT)) == -1) {
 			perror("msgget2");
 			exit(1);
 		}
-		//Writing down buf
+		
+		//Asking and sending the ChatID 
 		printf("Enter the ChatID\n");
 		downBuf.mtype = 1; /* we don't really care in this case */
 
@@ -71,31 +93,76 @@ int main(void)
 		if (msgsnd(midDown, &downBuf, len+1, 0) == -1) /* +1 for '\0' */
 			perror("msgsnd");
 		
+		//Geting the online user list
+		if ((midUp = msgget(upKey, 0644)) == -1) { 
+			perror("msgget1");
+			exit(1);
+		}	
 
-
-		printf("Enter the Message\n");
-		downBuf.mtype = 1; /* we don't really care in this case */
-
-		while(fgets(downBuf.mtext, sizeof downBuf.mtext, stdin) != NULL) {
-			int len = strlen(downBuf.mtext);
-
-			/* ditch newline at end, if it exists */
-			if (downBuf.mtext[len-1] == '\n') downBuf.mtext[len-1] = '\0';
-
-			if (msgsnd(midDown, &downBuf, len+1, 0) == -1) /* +1 for '\0' */
-				perror("msgsnd");
-		}
-		if (msgctl(midDown, IPC_RMID, NULL) == -1) {
-			perror("msgctl");
+		if (msgrcv(midUp, &upBuf, sizeof(upBuf.mtext), getpid(), 0) == -1) {
+			perror("msgrcv");
 			exit(1);
 		}
+		printf("spock: \"%s\"\n", upBuf.mtext);
+		
+
+		if(strstr(upBuf.mtext,"LIST") != NULL){
+			index = parseList(strings,upBuf.mtext);
+
+		}
+		printf("List of Clients: \nidNo. ChatID\n");
+		for(i = 1; i < index;i++){
+			printf("%6d. %s\n",i,strings[i]);
+		}
+		printf("Enter the id of the client\n" );
+
+		while(fgets(input, sizeof input, stdin) != NULL){
+			i = atoi(input);
+			
+			printf("Enter the Message\n");
+			downBuf.mtype = 1;
+
+			if(fgets(downBuf.mtext, sizeof downBuf.mtext, stdin) != NULL) {
+				strcat(downBuf.mtext," MSG ");
+				strcat(downBuf.mtext,strings[i]);
+				int len = strlen(downBuf.mtext);
+
+				/* ditch newline at end, if it exists */
+				if (downBuf.mtext[len-1] == '\n') downBuf.mtext[len-1] = '\0';
+
+				if (msgsnd(midDown, &downBuf, len+1, 0) == -1) /* +1 for '\0' */
+					perror("msgsnd");
+			}
+
+			if (msgrcv(midUp, &upBuf, sizeof(upBuf.mtext), getpid(), 0) == -1) {
+				perror("msgrcv");
+				exit(1);
+			}
+
+			if(strstr(upBuf.mtext,"LIST") != NULL){
+				index = parseList(strings,upBuf.mtext);
+
+			}
+			else{
+				printf("%s\n",upBuf.mtext );
+			}
+
+
+			printf("List of Clients: \nidNo. ChatID\n");
+			for(i = 1; i < index;i++){
+				printf("%6d. %s\n",i,strings[i]);
+			}
+			printf("Enter the id of the client\n" );			
+		}
+
+		if (msgctl(midDown, IPC_RMID, NULL) == -1) {
+				perror("msgctl");
+				exit(1);
+		}
+
 	}
 	
 
-
-
-
-	
 	return 0;
 }
 

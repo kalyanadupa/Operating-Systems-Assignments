@@ -30,6 +30,22 @@ void removeSubstring(char *s,const char *toremove){
     memmove(s,s+strlen(toremove),1+strlen(s+strlen(toremove)));
 }
 
+int parseList(char l[20][200], char *list) { 
+	int cnt = 0; 
+	char * token; 
+	token = strtok(list, " "); 
+	while((token = strtok(NULL, " ")) != NULL) { 
+		strcpy(l[cnt], token);
+		cnt++;
+	} 
+	return cnt;
+}
+void cleanArray(char l[20][200]){
+	int i ;
+	for(i = 0; i< 20;i++)
+		l[i] = "";
+}
+
 int main(void)
 {
 	struct my_msgbuf upBuf;
@@ -40,10 +56,11 @@ int main(void)
 	upKey = UP;
 	downKey = DOWN;
 	int flag;
+	char strings[20][200];
 	struct my_users users[200];
 	flag = 0;
 	int index,i;
-	char list[200] = "LIST ";
+	char list[200] = "LIST";
 	for(index = 0; index< 200; index++){
 		users[index].pid = -100;
 	}
@@ -104,28 +121,54 @@ int main(void)
 				strcpy(users[index].chatID,downBuf.mtext);
 				printf("process %d chatID %s added\n",qstat.msg_lspid, users[index].chatID);
 				index ++;
+				memset(upBuf.mtext, 0, sizeof upBuf.mtext);
+				 
+				strcat(list,upBuf.mtext);
+				strcpy(upBuf.mtext,list);
+				for(i = 0; i < index ; i++){
+					strcat(upBuf.mtext, " ");
+					strcat(upBuf.mtext, users[i].chatID);
+				}				
+				int len = strlen(upBuf.mtext);
+
+				
+				if (upBuf.mtext[len-1] == '\n') upBuf.mtext[len-1] = '\0';
+				for(i = 0 ; i < index; i++){
+					upBuf.mtype = users[i].pid;
+					printf("Sending %s\n",upBuf.mtext );
+					if (msgsnd(midUp, &upBuf, len+1, 0) == -1) /* +1 for '\0' */
+						perror("msgsnd");
+				}
+			}
+			if(strstr(downBuf.mtext,"MSG") != NULL){
+				cleanArray(strings);
+				int x = parseList(strings, downBuf.mtext);
+				if(msgctl(midDown,IPC_STAT,&qstat)<0){
+					perror("msgctl failed");
+					exit(1);
+				}
+				char sendChat[20];
+				long int toPid;
+				for(i = 0;i < index;i++){
+					if(qstat.msg_lspid == users[i].pid)
+						strcpy(sendChat,users[i].chatID)
+					if(strcmp(strings[2], users[i].chatID) == 0)
+						toPid = users[i].pid;
+				}
+				memset(upBuf.mtext, 0, sizeof upBuf.mtext);
+				strcat(upBuf.mtext,sendChat);
+				strcat(upBuf.mtext, ": ");
+				strcat(upBuf.mtext, strings[0]);
+				int len = strlen(upBuf.mtext);
+				upBuf.mtype = toPid;
+				if (msgsnd(midUp, &upBuf, len+1, 0) == -1) 
+					perror("msgsnd");
+
 			}
 			printf("captain: \"%s\"\n", downBuf.mtext);
 
 
-			memset(upBuf.mtext, 0, sizeof upBuf.mtext);
-			upBuf.mtype = 1; 
-			strcat(list,upBuf.mtext);
-			strcpy(upBuf.mtext,list);
-			for(i = 0; i < index ; i++){
-				strcat(upBuf.mtext, users[i].chatID);
-				strcat(upBuf.mtext, " ");
-			}
 
-		
-			int len = strlen(upBuf.mtext);
-
-			
-			if (upBuf.mtext[len-1] == '\n') upBuf.mtext[len-1] = '\0';
-			printf("Sending %s\n",upBuf.mtext );
-			if (msgsnd(midUp, &upBuf, len+1, 0) == -1) /* +1 for '\0' */
-				perror("msgsnd");
-			
 			if (msgctl(midUp, IPC_RMID, NULL) == -1) {
 				perror("msgctl");
 				exit(1);
