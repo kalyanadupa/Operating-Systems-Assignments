@@ -111,15 +111,15 @@ int main(void)
 
 		}
 		printf("List of Clients: \nidNo. ChatID\n");
-		for(i = 1; i < index;i++){
-			printf("%6d. %s\n",i,strings[i]);
+		for(i = 0; i < index;i++){
+			printf("%6d %s\n",i,strings[i]);
 		}
 		printf("Enter the id of the client\n" );
 
 		while(fgets(input, sizeof input, stdin) != NULL){
 			i = atoi(input);
 			
-			printf("Enter the Message\n");
+			printf("Enter the Message to %d\n", i);
 			downBuf.mtype = 1;
 
 			if(fgets(downBuf.mtext, sizeof downBuf.mtext, stdin) != NULL) {
@@ -127,9 +127,10 @@ int main(void)
 				strcat(downBuf.mtext,strings[i]);
 				int len = strlen(downBuf.mtext);
 
-				/* ditch newline at end, if it exists */
-				if (downBuf.mtext[len-1] == '\n') downBuf.mtext[len-1] = '\0';
-
+				removeSubstring(downBuf.mtext,"\n");
+				if (downBuf.mtext[len-1] == '\n') 
+					downBuf.mtext[len-1] = '\0';
+				printf("sending.. \"%s\" \n",downBuf.mtext );
 				if (msgsnd(midDown, &downBuf, len+1, 0) == -1) /* +1 for '\0' */
 					perror("msgsnd");
 			}
@@ -149,7 +150,7 @@ int main(void)
 
 
 			printf("List of Clients: \nidNo. ChatID\n");
-			for(i = 1; i < index;i++){
+			for(i = 0; i < index;i++){
 				printf("%6d. %s\n",i,strings[i]);
 			}
 			printf("Enter the id of the client\n" );			

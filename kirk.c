@@ -33,7 +33,9 @@ void removeSubstring(char *s,const char *toremove){
 int parseList(char l[20][200], char *list) { 
 	int cnt = 0; 
 	char * token; 
-	token = strtok(list, " "); 
+	token = strtok(list, " ");
+	strcpy(l[cnt], token);
+	cnt++;
 	while((token = strtok(NULL, " ")) != NULL) { 
 		strcpy(l[cnt], token);
 		cnt++;
@@ -43,7 +45,7 @@ int parseList(char l[20][200], char *list) {
 void cleanArray(char l[20][200]){
 	int i ;
 	for(i = 0; i< 20;i++)
-		l[i] = "";
+		memset(l[i], 0, sizeof l[i]);
 }
 
 int main(void)
@@ -137,7 +139,7 @@ int main(void)
 					upBuf.mtype = users[i].pid;
 					printf("Sending %s\n",upBuf.mtext );
 					if (msgsnd(midUp, &upBuf, len+1, 0) == -1) /* +1 for '\0' */
-						perror("msgsnd");
+						perror("msgsnd1");
 				}
 			}
 			if(strstr(downBuf.mtext,"MSG") != NULL){
@@ -150,10 +152,15 @@ int main(void)
 				char sendChat[20];
 				long int toPid;
 				for(i = 0;i < index;i++){
-					if(qstat.msg_lspid == users[i].pid)
-						strcpy(sendChat,users[i].chatID)
-					if(strcmp(strings[2], users[i].chatID) == 0)
+					if(qstat.msg_lspid == users[i].pid){
+						strcpy(sendChat,users[i].chatID);
+						printf("matched %ld\n",users[i].pid );
+					}
+					printf("comparing \"%s\" and \"%s\"\n",strings[2],users[i].chatID );
+					if(strcmp(strings[2], users[i].chatID) == 0){
 						toPid = users[i].pid;
+						printf("matched %s\n",strings[2] );	
+					}
 				}
 				memset(upBuf.mtext, 0, sizeof upBuf.mtext);
 				strcat(upBuf.mtext,sendChat);
@@ -161,19 +168,17 @@ int main(void)
 				strcat(upBuf.mtext, strings[0]);
 				int len = strlen(upBuf.mtext);
 				upBuf.mtype = toPid;
+				printf("server sending.. %s \n ",upBuf.mtext);
+				printf("to pid %ld\n",toPid );
 				if (msgsnd(midUp, &upBuf, len+1, 0) == -1) 
-					perror("msgsnd");
+					perror("msgsnd2");
 
 			}
-			printf("captain: \"%s\"\n", downBuf.mtext);
-
-
-
-			if (msgctl(midUp, IPC_RMID, NULL) == -1) {
-				perror("msgctl");
+			
+		}
+		if (msgctl(midUp, IPC_RMID, NULL) == -1) {
+				perror("msgctl rm ");
 				exit(1);
-			}
-
 		}
 	}
 
