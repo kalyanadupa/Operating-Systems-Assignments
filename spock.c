@@ -26,10 +26,11 @@ int main(void)
 	upKey = UP;
 	downKey = DOWN;
 	int flag;
+	char ChatID[20] ;
+	char a[20] = "NEW ";
 
-	
-	printf("To recieve message press 1 or press 0\n");
-	scanf("%d",&flag);
+
+	flag = 0;
 	if(flag){
 		if ((midUp = msgget(upKey, 0644)) == -1) { 
 			perror("msgget1");
@@ -48,14 +49,31 @@ int main(void)
 		}
 	}
 
-		
+	//change it to else	
 	else{
 		if ((midDown = msgget(downKey, 0644 | IPC_CREAT)) == -1) {
 			perror("msgget2");
 			exit(1);
 		}
 		//Writing down buf
-		printf("Enter lines of text, ^D to quit:\n");
+		printf("Enter the ChatID\n");
+		downBuf.mtype = 1; /* we don't really care in this case */
+
+		
+		gets(ChatID);
+		strcat(a,ChatID);
+		strcpy(downBuf.mtext,a);
+		int len = strlen(downBuf.mtext);
+
+		if (downBuf.mtext[len-1] == '\n') 
+			downBuf.mtext[len-1] = '\0';
+
+		if (msgsnd(midDown, &downBuf, len+1, 0) == -1) /* +1 for '\0' */
+			perror("msgsnd");
+		
+
+
+		printf("Enter the Message\n");
 		downBuf.mtype = 1; /* we don't really care in this case */
 
 		while(fgets(downBuf.mtext, sizeof downBuf.mtext, stdin) != NULL) {
@@ -67,16 +85,17 @@ int main(void)
 			if (msgsnd(midDown, &downBuf, len+1, 0) == -1) /* +1 for '\0' */
 				perror("msgsnd");
 		}
+		if (msgctl(midDown, IPC_RMID, NULL) == -1) {
+			perror("msgctl");
+			exit(1);
+		}
 	}
 	
 
 
 
 
-	if (msgctl(midDown, IPC_RMID, NULL) == -1) {
-		perror("msgctl");
-		exit(1);
-	}
+	
 	return 0;
 }
 
