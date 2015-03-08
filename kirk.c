@@ -1,7 +1,7 @@
 /*
-** kirk.c -- writes to a message queue
+12CS30001 - A Abhishek Kalyan
+12CS10025 - K Gnan Deep Rathan
 */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <time.h>
 
 #define UP 1234
 #define DOWN 4321
@@ -54,6 +55,8 @@ int main(void)
 	struct my_msgbuf downBuf;
 	struct msqid_ds qstat;
 	int midUp,midDown;
+	time_t rawtime;
+	struct tm * timeinfo;
 	key_t upKey,downKey;
 	upKey = UP;
 	downKey = DOWN;
@@ -107,12 +110,13 @@ int main(void)
 
 
 
-		printf("captain: ready to receive messages\n");
+		// printf("captain: ready to receive messages\n");
 		for(;;) {
 			if (msgrcv(midDown, &downBuf, sizeof(downBuf.mtext), 0, 0) == -1) {
 				perror("msgrcv");
 				exit(1);
 			}
+			printf("Recieved\t%s\n",downBuf.mtext);
 			if(strstr(downBuf.mtext,"NEW") != NULL){
 				if(msgctl(midDown,IPC_STAT,&qstat)<0){
 					perror("msgctl failed");
@@ -121,7 +125,7 @@ int main(void)
 				removeSubstring(downBuf.mtext,"NEW ");
 				users[index].pid = qstat.msg_lspid;
 				strcpy(users[index].chatID,downBuf.mtext);
-				printf("process %d chatID %s added\n",qstat.msg_lspid, users[index].chatID);
+				printf("process %d\tchatID %20s\tadded\tTotal Users %d \n",qstat.msg_lspid, users[index].chatID, index+1);
 				index ++;
 				memset(upBuf.mtext, 0, sizeof upBuf.mtext);
 				 
@@ -137,7 +141,7 @@ int main(void)
 				if (upBuf.mtext[len-1] == '\n') upBuf.mtext[len-1] = '\0';
 				for(i = 0 ; i < index; i++){
 					upBuf.mtype = users[i].pid;
-					printf("Sending %s\n",upBuf.mtext );
+					printf("Sending\t%s\n",upBuf.mtext );
 					if (msgsnd(midUp, &upBuf, len+1, 0) == -1) /* +1 for '\0' */
 						perror("msgsnd1");
 				}
@@ -154,21 +158,23 @@ int main(void)
 				for(i = 0;i < index;i++){
 					if(qstat.msg_lspid == users[i].pid){
 						strcpy(sendChat,users[i].chatID);
-						printf("matched %ld\n",users[i].pid );
 					}
-					printf("comparing \"%s\" and \"%s\"\n",strings[2],users[i].chatID );
 					if(strcmp(strings[2], users[i].chatID) == 0){
 						toPid = users[i].pid;
-						printf("matched %s\n",strings[2] );	
 					}
 				}
+				time ( &rawtime );
+				timeinfo = localtime ( &rawtime );
+				//printf ( "Current local time and date: %s", asctime (timeinfo) );
 				memset(upBuf.mtext, 0, sizeof upBuf.mtext);
 				strcat(upBuf.mtext,sendChat);
 				strcat(upBuf.mtext, ": ");
 				strcat(upBuf.mtext, strings[0]);
+				strcat(upBuf.mtext, " @ ");
+				strcat(upBuf.mtext,asctime (timeinfo));
 				int len = strlen(upBuf.mtext);
 				upBuf.mtype = toPid;
-				printf("server sending.. %s \n ",upBuf.mtext);
+				printf("Sending\t%s \n ",upBuf.mtext);
 				printf("to pid %ld\n",toPid );
 				if (msgsnd(midUp, &upBuf, len+1, 0) == -1) 
 					perror("msgsnd2");

@@ -1,6 +1,3 @@
-/*
-** spock.c -- reads from a message queue
-*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +56,7 @@ int main(void)
 			exit(1);
 		}		
 		//Reading Up buf 
-		printf("spock: ready to receive messages\n");
+		// printf("spock: ready to receive messages\n");
 
 
 		for(;;) { 
@@ -103,7 +100,7 @@ int main(void)
 			perror("msgrcv");
 			exit(1);
 		}
-		printf("spock: \"%s\"\n", upBuf.mtext);
+		// printf("spock: \"%s\"\n", upBuf.mtext);
 		
 
 		if(strstr(upBuf.mtext,"LIST") != NULL){
@@ -130,7 +127,7 @@ int main(void)
 				removeSubstring(downBuf.mtext,"\n");
 				if (downBuf.mtext[len-1] == '\n') 
 					downBuf.mtext[len-1] = '\0';
-				printf("sending.. \"%s\" \n",downBuf.mtext );
+				// printf("sending.. \"%s\" \n",downBuf.mtext );
 				if (msgsnd(midDown, &downBuf, len+1, 0) == -1) /* +1 for '\0' */
 					perror("msgsnd");
 			}
