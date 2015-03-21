@@ -42,14 +42,6 @@ void randwait(int secs) {
 
 
 void main(){
-	// key_t entryKey = 111;
-	// key_t meatMKey = 222;
-	// key_t stateKey = 333;
-	// key_t lionCKey = 444;
-	// key_t jackalCKey = 555;
-	// key_t rangerCKey = 666;
-	// key_t meatCKey = 777;
-	// key_t commonWKey = 888;
 
 	int nL,nJ,i,j,k,l,pid;
 	int lionNo,iterNo,pit;
@@ -75,7 +67,7 @@ void main(){
 		semctl(lionCID,i,SETVAL,0);
 		semctl(jackalCID,i,SETVAL,0);
 		semctl(rangerCID,i,SETVAL,0);
-		semctl(meatCID,i,SETVAL,0);
+		semctl(meatCID,i,SETVAL,1);
 		
 	}
 	semctl(commonWID,0,SETVAL,0);
