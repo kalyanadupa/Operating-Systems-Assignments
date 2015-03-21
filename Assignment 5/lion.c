@@ -7,14 +7,14 @@
 #include <time.h>
 
 
-#define entryKey = 111
-#define meatMKey = 222
-#define stateKey = 333
-#define lionCKey = 444
-#define jackalCKey = 555
-#define rangerCKey = 666
-#define meatCKey = 777
-#define commonWKey = 888
+#define entryKey 111
+#define meatMKey 222
+#define stateKey 333
+#define lionCKey 444
+#define jackalCKey 555
+#define rangerCKey 666
+#define meatCKey 777
+#define commonWKey 888
  
 
 
@@ -89,9 +89,9 @@ void main(){
 	for(lionNo = 0; lionNo < nL; lionNo++){
 		if((lionPid[lionNo] = fork())< 0 ){
 			perror("fork");
-			exit(1);
+			return;
 		}
-		if(pid == 0){
+		if(lionPid[lionNo] == 0){
 			
 			randwait(lionNo);
 			
@@ -153,7 +153,7 @@ void main(){
 				printf("Lion %d Loop %d  Done \n",lionNo,iterNo );
 
 			}
-			exit(0);
+			return;
 		}
 
 	}
