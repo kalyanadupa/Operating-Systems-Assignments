@@ -55,7 +55,7 @@ void main(){
 		
 		cPid[i] = fork();
 		if(cPid[i] == 0){
-			printf("Customer %d enters Shop\n", );
+			printf("Customer %d enters Shop\n",i);
 			down(mutexID,0);
 			if(semctl(custID,0,GETVAL,0) < nChairs){
 				printf("Customer %d waits in waiting room\n",i );
@@ -70,7 +70,7 @@ void main(){
 				printf("Shop is full Customer %d Leaves\n",i );
 				up(mutexID,0);
 			}
-			exit(0);
+			return;
 		}
 
 	}
